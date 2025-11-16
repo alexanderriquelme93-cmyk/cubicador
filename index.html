@@ -1,1 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cubicador simple</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 10px;
+    }
+    h1 { text-align: center; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    label {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.9rem;
+    }
+    input {
+      width: 100%;
+      padding: 4px 6px;
+      margin-top: 2px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .resultado {
+      margin-top: 8px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Cubicador de Carga</h1>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Equipo (contenedor / camión)</h2>
+      <label>Largo útil (cm)
+        <input id="eqLargo" type="number" value="600">
+      </label>
+      <label>Ancho útil (cm)
+        <input id="eqAncho" type="number" value="230">
+      </label>
+      <label>Alto útil (cm)
+        <input id="eqAlto" type="number" value="240">
+      </label>
+      <label>Peso máximo (kg)
+        <input id="eqPesoMax" type="number" value="25000">
+      </label>
+    </div>
+
+    <div class="card">
+      <h2>Ítem</h2>
+      <label>Largo ítem (cm)
+        <input id="itLargo" type="number" value="100">
+      </label>
+      <label>Ancho ítem (cm)
+        <input id="itAncho" type="number" value="50">
+      </label>
+      <label>Alto ítem (cm)
+        <input id="itAlto" type="number" value="40">
+      </label>
+      <label>Peso ítem (kg)
+        <input id="itPeso" type="number" value="20">
+      </label>
+      <label>
+        <input id="rotacion" type="checkbox" checked>
+        Permitir rotar largo/ancho
+      </label>
+    </div>
+  </div>
+
+  <button onclick="calcular()">Calcular cubicado</button>
+
+  <div id="salida" class="resultado"></div>
+
+  <script>
+    function calcularConfiguracion(Lc, Ac, Hc, Li, Ai, Hi) {
+      const porLargo = Math.floor(Lc / Li);
+      const porAncho = Math.floor(Ac / Ai);
+      const capas = Math.floor(Hc / Hi);
+
+      if (porLargo <= 0 || porAncho <= 0 || capas <= 0) return {total: 0};
+
+      const porCapa = porLargo * porAncho;
+      const total = porCapa * capas;
+      return {porLargo, porAncho, capas, porCapa, total};
+    }
+
+    function calcular() {
+      const Lc = Number(document.getElementById("eqLargo").value);
+      const Ac = Number(document.getElementById("eqAncho").value);
+      const Hc = Number(document.getElementById("eqAlto").value);
+      const pesoMax = Number(document.getElementById("eqPesoMax").value);
+
+      let Li = Number(document.getElementById("itLargo").value);
+      let Ai = Number(document.getElementById("itAncho").value);
+      let Hi = Number(document.getElementById("itAlto").value);
+      const pesoItem = Number(document.getElementById("itPeso").value);
+      const rotar = document.getElementById("rotacion").checked;
+
+      let config1 = calcularConfiguracion(Lc, Ac, Hc, Li, Ai, Hi);
+      let config2 = {total: 0};
+      if (rotar) {
+        config2 = calcularConfiguracion(Lc, Ac, Hc, Ai, Li, Hi);
+      }
+
+      let mejor = config1.total >= config2.total ? config1 : config2;
+      let usoRotado = config2.total > config1.total;
+
+      if (mejor.total === 0) {
+        document.getElementById("salida").innerText =
+          "El ítem no cabe en el equipo con las dimensiones dadas.";
+        return;
+      }
+
+      const volumenItem = Li * Ai * Hi;
+      const volumenEquipo = Lc * Ac * Hc;
+      const volumenUsado = mejor.total * volumenItem;
+      const usoVolumen = volumenUsado / volumenEquipo * 100;
+
+      const pesoTotal = mejor.total * pesoItem;
+      const usoPeso = pesoTotal / pesoMax * 100;
+
+      const texto = `
+Total de ítems que caben: ${mejor.total}
+Ítems por capa: ${mejor.porCapa} ( ${mejor.porLargo} por largo x ${mejor.porAncho} por ancho )
+Capas: ${mejor.capas}
+¿Usó rotación largo/ancho?: ${usoRotado ? "Sí" : "No"}
+
+Volumen equipo: ${(volumenEquipo/1_000_000).toFixed(2)} m³
+Volumen usado: ${(volumenUsado/1_000_000).toFixed(2)} m³
+Uso de volumen: ${usoVolumen.toFixed(1)} %
+
+Peso total: ${pesoTotal.toFixed(1)} kg
+Peso máximo equipo: ${pesoMax.toFixed(1)} kg
+Uso de peso: ${usoPeso.toFixed(1)} %
+      `;
+      document.getElementById("salida").innerText = texto;
+    }
+  </script>
+</body>
+</html>
 
