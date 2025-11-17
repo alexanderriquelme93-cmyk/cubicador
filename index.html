@@ -1,434 +1,236 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Calculadora de Cubicación</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 1100px;
-      margin: 20px auto;
-      padding: 10px 20px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    h2 {
-      margin-top: 0;
-      font-size: 1.1rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 18px;
-      margin-bottom: 20px;
-    }
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 12px 14px;
-    }
-    label {
-      display: block;
-      margin-top: 6px;
-      font-size: 0.9rem;
-    }
-    input, select {
-      width: 100%;
-      padding: 4px 6px;
-      margin-top: 2px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 10px;
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-    .resultado {
-      white-space: pre-wrap;
-      font-family: Consolas, monospace;
-      margin-top: 8px;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: #fafafa;
-    }
-    .small {
-      font-size: 0.8rem;
-      color: #555;
-    }
-    .status-ok {
-      color: #0a7a0a;
-      font-weight: bold;
-    }
-    .status-bad {
-      color: #b00020;
-      font-weight: bold;
-    }
-    canvas {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      background: #f7f7f7;
-      display: block;
-      margin-top: 10px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Cubicador 3D – Pallets</title>
+
+    <style>
+        body{
+            font-family: Arial;
+            margin: 20px;
+            background: #f1f1f1;
+        }
+
+        #contenedor{
+            width: 1100px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        input{
+            padding: 5px;
+            width: 120px;
+            margin-bottom: 10px;
+        }
+
+        #resultado{
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #vista3d{
+            width: 900px;
+            height: 500px;
+            margin-top: 25px;
+            background: #ccc;
+        }
+    </style>
 </head>
 <body>
-  <h1>Calculadora de Cubicación</h1>
-  <p class="small">
-    Basado en tu Excel: tipos de camiones, tipos de pallet y cálculo de máximo
-    de pallet por camión (rejilla vs volumen). Ahora incluye cantidad deseada y
-    vista 3D isométrica simple.
-  </p>
 
-  <div class="grid">
-    <!-- CAMIÓN -->
-    <div class="card">
-      <h2>Camión</h2>
+<div id="contenedor">
 
-      <label>Tipo de camión
-        <select id="truckSelect">
-          <option value="hino916">Hino 916</option>
-          <option value="atego1729">Mercedes-Benz Atego 1729</option>
-          <option value="volvofl240" selected>Volvo FL 240</option>
-        </select>
-      </label>
+    <h1>Cubicador 3D – Pallets</h1>
 
-      <label>Largo (m)
-        <input id="truckLargo" type="number" step="0.01" />
-      </label>
+    <h3>Medidas del camión (en metros)</h3>
 
-      <label>Ancho (m)
-        <input id="truckAncho" type="number" step="0.01" />
-      </label>
+    Largo: <input id="cam_l" type="number" value="12.0"><br>
+    Ancho: <input id="cam_a" type="number" value="2.4"><br>
+    Alto:  <input id="cam_h" type="number" value="2.5"><br>
 
-      <label>Alto interno (m)
-        <input id="truckAlto" type="number" step="0.01" />
-      </label>
+    <h3>Medidas del pallet</h3>
 
-      <label>Capacidad (kg)
-        <input id="truckCapacidad" type="number" step="1" />
-      </label>
+    Largo: <input id="pal_l" type="number" value="1.2"><br>
+    Ancho: <input id="pal_a" type="number" value="1.0"><br>
+    Alto:  <input id="pal_h" type="number" value="0.6"><br>
 
-      <label>Valor viaje (CLP)
-        <input id="valorViaje" type="number" step="1000" value="95000" />
-      </label>
-    </div>
+    <h3>Cantidad de pallets que quieres mover</h3>
 
-    <!-- PALLET -->
-    <div class="card">
-      <h2>Pallet</h2>
+    Cantidad: <input id="cantidad" type="number" value="20"><br>
 
-      <label>Tipo de pallet
-        <select id="palletSelect">
-          <option value="eu">Pallet Europeo (1.2 × 0.8)</option>
-          <option value="us" selected>Pallet Americano (1.2 × 1.0)</option>
-        </select>
-      </label>
+    <button onclick="calcular()">Calcular</button>
 
-      <label>Largo pallet (m)
-        <input id="palLargo" type="number" step="0.01" />
-      </label>
+    <div id="resultado"></div>
 
-      <label>Ancho pallet (m)
-        <input id="palAncho" type="number" step="0.01" />
-      </label>
+    <h2>Vista 3D</h2>
+    <div id="vista3d"></div>
 
-      <label>Alto pallet (m)
-        <input id="palAlto" type="number" step="0.01" value="0.7" />
-      </label>
+</div>
 
-      <label>Cantidad de pallets que quiero cargar
-        <input id="palDeseados" type="number" step="1" value="0" />
-      </label>
 
-      <div class="small">
-        * Si dejas la cantidad en 0, se muestra sólo la capacidad máxima del camión.
-      </div>
-    </div>
-  </div>
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/examples/js/controls/OrbitControls.js"></script>
 
-  <button onclick="calcular()">Calcular cubicación</button>
 
-  <div id="mensaje" class="small" style="margin-top:8px;"></div>
-  <div id="salida" class="resultado"></div>
+<script>
 
-  <h2>Visualización 3D isométrica (simple)</h2>
-  <p class="small">
-    Verde = pallets que estás usando. Gris = capacidad libre hasta el máximo.
-    Vista en planta con altura simulada por niveles.
-  </p>
-  <canvas id="vista3d" width="700" height="420"></canvas>
+let renderer, scene, camera, controls;
 
-  <script>
-    // Datos tomados de tu Excel (tipos de camiones y pallets)
-    const trucks = {
-      hino916: {
-        nombre: "Hino 916",
-        largo: 5.4,
-        ancho: 2.2,
-        alto: 2.1,
-        capacidad: 3800
-      },
-      atego1729: {
-        nombre: "Mercedes-Benz Atego 1729",
-        largo: 7.3,
-        ancho: 2.4,
-        alto: 2.3,
-        capacidad: 11500
-      },
-      volvofl240: {
-        nombre: "Volvo FL 240",
-        largo: 6.2,
-        ancho: 2.3,
-        alto: 2.2,
-        capacidad: 6800
-      }
-    };
+// ======================================================
+//                 FUNCIÓN PRINCIPAL DE CÁLCULO
+// ======================================================
+function calcular(){
 
-    const pallets = {
-      eu: {
-        nombre: "Pallet Europeo",
-        largo: 1.2,
-        ancho: 0.8
-      },
-      us: {
-        nombre: "Pallet Americano",
-        largo: 1.2,
-        ancho: 1.0
-      }
-    };
+    const camL = parseFloat(cam_l.value);
+    const camA = parseFloat(cam_a.value);
+    const camH = parseFloat(cam_h.value);
 
-    // Cargar valores iniciales al entrar
-    window.addEventListener("load", () => {
-      actualizarCamion();
-      actualizarPallet();
-      calcular();
+    const palL = parseFloat(pal_l.value);
+    const palA = parseFloat(pal_a.value);
+    const palH = parseFloat(pal_h.value);
+
+    const deseados = parseInt(cantidad.value);
+
+    // FILAS Y COLUMNAS
+    const cols = Math.floor(camL / palL);
+    const rows = Math.floor(camA / palA);
+
+    // NIVELES
+    const niveles = Math.floor(camH / palH);
+
+    const maximo = cols * rows * niveles;
+
+    let mensaje =
+        "Máximo que caben: " + maximo + "<br>" +
+        "Distribución: " + cols + " columnas × " + rows + " filas × " + niveles + " niveles<br><br>";
+
+    if (deseados <= maximo){
+        mensaje += "<span style='color:green'>✔ Sí caben los " + deseados + " pallets</span>";
+    }else{
+        mensaje += "<span style='color:red'>✘ No caben (" + deseados + " vs " + maximo + ")</span>";
+    }
+
+    document.getElementById("resultado").innerHTML = mensaje;
+
+    dibujar3D(cols, rows, niveles, maximo, deseados);
+}
+
+
+// ======================================================
+//                FUNCIÓN 3D COMPLETA – THREE.JS
+// ======================================================
+function dibujar3D(cols, rows, niveles, maximo, deseados){
+
+    const usados = Math.min(deseados, maximo);
+
+    const palletW = 1;    // Escalado
+    const palletD = 1;
+    const palletH = 0.5;
+
+    const separacion = 0.1;
+
+    // Crear escena y cámara solo una vez
+    if (!renderer){
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+
+        camera = new THREE.PerspectiveCamera(
+            45, 
+            900/500,
+            0.1, 
+            1000
+        );
+
+        camera.position.set(10,10,14);
+
+        renderer = new THREE.WebGLRenderer({ antialias:true });
+        renderer.setSize(900,500);
+
+        document.getElementById("vista3d").innerHTML = "";
+        document.getElementById("vista3d").appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+    }
+
+    // Limpiar escena
+    while(scene.children.length > 0)
+        scene.remove(scene.children[0]);
+
+    // Luces
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(8,12,10);
+    scene.add(light);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+    // Dibujar pallets
+    const totalPallets = Math.min(maximo, cols*rows*niveles);
+
+    for (let i = 0; i < totalPallets; i++){
+
+        const nivel = Math.floor(i / (cols*rows));
+        const resto = i % (cols*rows);
+        const fila = Math.floor(resto / cols);
+        const col = resto % cols;
+
+        const ocupado = i < usados;
+        const color = ocupado ? 0x27ae60 : 0xaaaaaa;
+
+        const geo = new THREE.BoxGeometry(palletW, palletH, palletD);
+        const mat = new THREE.MeshStandardMaterial({ color });
+        const pallet = new THREE.Mesh(geo, mat);
+
+        pallet.position.set(
+            col * (palletW + separacion),
+            nivel * (palletH + separacion),
+            fila * (palletD + separacion)
+        );
+
+        scene.add(pallet);
+    }
+
+
+    // Caja del camión (wireframe)
+    const camGeo = new THREE.BoxGeometry(
+        cols * (palletW + separacion) + 1,
+        niveles * (palletH + separacion) + 1,
+        rows * (palletD + separacion) + 1
+    );
+
+    const camMat = new THREE.MeshBasicMaterial({
+        color: 0x0044ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
     });
 
-    document.getElementById("truckSelect").addEventListener("change", () => {
-      actualizarCamion();
-      calcular();
-    });
-    document.getElementById("palletSelect").addEventListener("change", () => {
-      actualizarPallet();
-      calcular();
-    });
+    const camion = new THREE.Mesh(camGeo, camMat);
+    camion.position.set(
+        (cols*(palletW+separacion))/2,
+        (niveles*(palletH+separacion))/2,
+        (rows*(palletD+separacion))/2
+    );
 
-    function actualizarCamion() {
-      const sel = document.getElementById("truckSelect").value;
-      const t = trucks[sel];
-      document.getElementById("truckLargo").value = t.largo;
-      document.getElementById("truckAncho").value = t.ancho;
-      document.getElementById("truckAlto").value = t.alto;
-      document.getElementById("truckCapacidad").value = t.capacidad;
+    scene.add(camion);
+
+    // Animación
+    function animar(){
+        requestAnimationFrame(animar);
+        controls.update();
+        renderer.render(scene, camera);
     }
+    animar();
+}
 
-    function actualizarPallet() {
-      const sel = document.getElementById("palletSelect").value;
-      const p = pallets[sel];
-      document.getElementById("palLargo").value = p.largo;
-      document.getElementById("palAncho").value = p.ancho;
-    }
-
-    function calcular() {
-      const Lc = parseFloat(document.getElementById("truckLargo").value);
-      const Ac = parseFloat(document.getElementById("truckAncho").value);
-      const Hc = parseFloat(document.getElementById("truckAlto").value);
-      const capacidadKg = parseFloat(document.getElementById("truckCapacidad").value) || 0;
-      const valorViaje = parseFloat(document.getElementById("valorViaje").value) || 0;
-
-      const Lp = parseFloat(document.getElementById("palLargo").value);
-      const Ap = parseFloat(document.getElementById("palAncho").value);
-      const Hp = parseFloat(document.getElementById("palAlto").value);
-      const deseados = parseInt(document.getElementById("palDeseados").value, 10) || 0;
-
-      if (!Lc || !Ac || !Hc || !Lp || !Ap || !Hp) {
-        document.getElementById("salida").innerText =
-          "Faltan datos. Revisa que todas las medidas tengan un valor válido.";
-        return;
-      }
-
-      // Volúmenes en m3
-      const volPallet = Lp * Ap * Hp;
-      const volCamion = Lc * Ac * Hc;
-
-      // Cantidad de pallets por dimensión (similar a tu Excel)
-      const palletsAncho = Math.floor(Ac / Ap); // ancho camión / ancho pallet
-      const palletsLargo = Math.floor(Lc / Lp); // largo camión / largo pallet
-      const palletsAlto = Math.floor(Hc / Hp);  // alto camión / alto pallet
-
-      const palletsRejilla = palletsAncho * palletsLargo * palletsAlto;
-      const maxPorVolumen = Math.floor(volCamion / volPallet);
-
-      let maximo = Math.min(maxPorVolumen, palletsRejilla);
-      if (maximo === 0) maximo = 1; // igual que tu Excel fuerza al menos 1
-
-      const valorPorM3 = volCamion > 0 ? valorViaje / volCamion : 0;
-
-      // Mensaje de si caben o no los deseados
-      let mensaje = "";
-      if (deseados <= 0) {
-        mensaje =
-          "No ingresaste cantidad de pallets, se muestra solo la capacidad máxima del camión.";
-      } else if (deseados <= maximo) {
-        mensaje =
-          `👉 Los ${deseados} pallets que quieres C A B E N en este camión (máximo permitido: ${maximo}).`;
-      } else {
-        mensaje =
-          `⚠ Los ${deseados} pallets que quieres NO CABEN. Capacidad máxima de este camión: ${maximo}.`;
-      }
-
-      const mensajeDiv = document.getElementById("mensaje");
-      mensajeDiv.textContent = mensaje;
-      mensajeDiv.className =
-        deseados === 0
-          ? "small"
-          : deseados <= maximo
-          ? "small status-ok"
-          : "small status-bad";
-
-      const texto = [
-        `Camión: ${Lc.toFixed(2)}m (L) x ${Ac.toFixed(2)}m (A) x ${Hc.toFixed(2)}m (H)`,
-        `Pallet: ${Lp.toFixed(2)}m (L) x ${Ap.toFixed(2)}m (A) x ${Hp.toFixed(2)}m (H)`,
-        "",
-        `Volumen pallet: ${volPallet.toFixed(3)} m³`,
-        `Volumen camión: ${volCamion.toFixed(3)} m³`,
-        "",
-        `Pallets por ancho:  ${palletsAncho}`,
-        `Pallets por largo:  ${palletsLargo}`,
-        `Pallets por alto:   ${palletsAlto}`,
-        `Pallets en rejilla (ancho × largo × alto): ${palletsRejilla}`,
-        `Máx. por volumen (INT(volCamion/volPallet)): ${maxPorVolumen}`,
-        "",
-        `MÁXIMO DE PALLET POR CAMIÓN: ${maximo}`,
-        deseados > 0 ? `Pallets deseados: ${deseados}` : "",
-        "",
-        `Capacidad de carga (kg): ${capacidadKg.toFixed(0)}`,
-        `Valor viaje: ${valorViaje.toFixed(0)} CLP`,
-        `Valor por m³: ${valorPorM3.toFixed(0)} CLP/m³`
-      ].join("\n");
-
-      document.getElementById("salida").innerText = texto;
-
-      // Dibujar la vista 3D
-      const capasDibujo = Math.max(palletsAlto, 1);
-      dibujar3D(palletsLargo, palletsAncho, capasDibujo, maximo, deseados);
-    }
-
-    // === DIBUJO 3D ISOMÉTRICO SIMPLE ===
-    function dibujar3D(cols, rows, niveles, maximo, deseados) {
-      const canvas = document.getElementById("vista3d");
-      const ctx = canvas.getContext("2d");
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Parámetros de proyección isométrica
-      const tileW = 40;
-      const tileH = 20;
-      const palletHeight = 12;
-
-      const originX = canvas.width / 2;
-      const originY = 60;
-
-      // Función de conversión a iso
-      function iso(x, y, z) {
-        return {
-          x: originX + (x - y) * tileW / 2,
-          y: originY + (x + y) * tileH / 2 - z * palletHeight
-        };
-      }
-
-      // Dibujar "suelo" del camión
-      const esquina1 = iso(0, 0, 0);
-      const esquina2 = iso(cols, 0, 0);
-      const esquina3 = iso(cols, rows, 0);
-      const esquina4 = iso(0, rows, 0);
-
-      ctx.beginPath();
-      ctx.moveTo(esquina1.x, esquina1.y);
-      ctx.lineTo(esquina2.x, esquina2.y);
-      ctx.lineTo(esquina3.x, esquina3.y);
-      ctx.lineTo(esquina4.x, esquina4.y);
-      ctx.closePath();
-      ctx.fillStyle = "#e0e0e0";
-      ctx.fill();
-      ctx.strokeStyle = "#999";
-      ctx.stroke();
-
-      // Cuántos pallets vamos a dibujar como "ocupados"
-      const usados =
-        deseados > 0 ? Math.min(deseados, maximo) : maximo;
-      const total = maximo;
-
-      // Función para dibujar un pallet 3D
-      function dibujarPallet(ix, iy, iz, ocupado) {
-        const p0 = iso(ix, iy, iz);
-        const p1 = iso(ix + 1, iy, iz);
-        const p2 = iso(ix + 1, iy + 1, iz);
-        const p3 = iso(ix, iy + 1, iz);
-        const p4 = iso(ix, iy, iz + 1);
-        const p5 = iso(ix + 1, iy, iz + 1);
-        const p6 = iso(ix + 1, iy + 1, iz + 1);
-        const p7 = iso(ix, iy + 1, iz + 1);
-
-        // Colores
-        const colorTop = ocupado ? "#4caf50" : "#cfd8dc";
-        const colorLeft = ocupado ? "#388e3c" : "#b0bec5";
-        const colorRight = ocupado ? "#66bb6a" : "#e0e0e0";
-
-        // Cara superior
-        ctx.beginPath();
-        ctx.moveTo(p4.x, p4.y);
-        ctx.lineTo(p5.x, p5.y);
-        ctx.lineTo(p6.x, p6.y);
-        ctx.lineTo(p7.x, p7.y);
-        ctx.closePath();
-        ctx.fillStyle = colorTop;
-        ctx.fill();
-        ctx.strokeStyle = "#555";
-        ctx.stroke();
-
-        // Cara izquierda
-        ctx.beginPath();
-        ctx.moveTo(p4.x, p4.y);
-        ctx.lineTo(p7.x, p7.y);
-        ctx.lineTo(p3.x, p3.y);
-        ctx.lineTo(p0.x, p0.y);
-        ctx.closePath();
-        ctx.fillStyle = colorLeft;
-        ctx.fill();
-        ctx.stroke();
-
-        // Cara derecha
-        ctx.beginPath();
-        ctx.moveTo(p5.x, p5.y);
-        ctx.lineTo(p6.x, p6.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.lineTo(p1.x, p1.y);
-        ctx.closePath();
-        ctx.fillStyle = colorRight;
-        ctx.fill();
-        ctx.stroke();
-      }
-
-      // Recorremos pallets en orden de atrás hacia adelante (para el dibujo)
-      const layerSize = cols * rows;
-      const totalADibujar = Math.min(total, cols * rows * niveles);
-
-      for (let idx = totalADibujar - 1; idx >= 0; idx--) {
-        const z = Math.floor(idx / layerSize);
-        const resto = idx % layerSize;
-        const y = Math.floor(resto / cols); // filas (ancho)
-        const x = resto % cols;            // columnas (largo)
-
-        const ocupado = idx < usados;
-        dibujarPallet(x, y, z, ocupado);
-      }
-    }
-  </script>
+</script>
 </body>
 </html>
 
