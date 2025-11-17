@@ -1,159 +1,268 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Cubicador simple</title>
+  <meta charset="UTF-8" />
+  <title>Calculadora de Cubicación</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 900px;
+      max-width: 1000px;
       margin: 20px auto;
-      padding: 10px;
+      padding: 10px 20px;
     }
-    h1 { text-align: center; }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
       margin-bottom: 20px;
     }
     .card {
       border: 1px solid #ccc;
       border-radius: 8px;
-      padding: 12px;
+      padding: 12px 14px;
     }
     label {
       display: block;
       margin-top: 6px;
       font-size: 0.9rem;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 4px 6px;
       margin-top: 2px;
+      box-sizing: border-box;
+    }
+    input[readonly] {
+      background-color: #f4f4f4;
     }
     button {
       margin-top: 10px;
-      padding: 8px 14px;
+      padding: 8px 16px;
       cursor: pointer;
     }
     .resultado {
+      white-space: pre-wrap;
+      font-family: Consolas, monospace;
       margin-top: 8px;
-      font-weight: bold;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fafafa;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #555;
     }
   </style>
 </head>
 <body>
-
-  <h1>Cubicador de Carga</h1>
+  <h1>Calculadora de Cubicación</h1>
+  <p class="small">
+    Basado en tu archivo Excel: tipos de camiones, tipos de pallet y cálculo de
+    máximo de pallet por camión (rejilla vs volumen).
+  </p>
 
   <div class="grid">
+    <!-- CAMIÓN -->
     <div class="card">
-      <h2>Equipo (contenedor / camión)</h2>
-      <label>Largo útil (cm)
-        <input id="eqLargo" type="number" value="600">
+      <h2>Camión</h2>
+
+      <label>Tipo de camión
+        <select id="truckSelect">
+          <option value="hino916">Hino 916</option>
+          <option value="atego1729">Mercedes-Benz Atego 1729</option>
+          <option value="volvofl240" selected>Volvo FL 240</option>
+        </select>
       </label>
-      <label>Ancho útil (cm)
-        <input id="eqAncho" type="number" value="230">
+
+      <label>Largo (m)
+        <input id="truckLargo" type="number" step="0.01" />
       </label>
-      <label>Alto útil (cm)
-        <input id="eqAlto" type="number" value="240">
+
+      <label>Ancho (m)
+        <input id="truckAncho" type="number" step="0.01" />
       </label>
-      <label>Peso máximo (kg)
-        <input id="eqPesoMax" type="number" value="25000">
+
+      <label>Alto interno (m)
+        <input id="truckAlto" type="number" step="0.01" />
+      </label>
+
+      <label>Capacidad (kg)
+        <input id="truckCapacidad" type="number" step="1" />
+      </label>
+
+      <label>Valor viaje (CLP)
+        <input id="valorViaje" type="number" step="1000" value="95000" />
       </label>
     </div>
 
+    <!-- PALLET -->
     <div class="card">
-      <h2>Ítem</h2>
-      <label>Largo ítem (cm)
-        <input id="itLargo" type="number" value="100">
+      <h2>Pallet</h2>
+
+      <label>Tipo de pallet
+        <select id="palletSelect">
+          <option value="eu">Pallet Europeo (1.2 × 0.8)</option>
+          <option value="us" selected>Pallet Americano (1.2 × 1.0)</option>
+        </select>
       </label>
-      <label>Ancho ítem (cm)
-        <input id="itAncho" type="number" value="50">
+
+      <label>Largo pallet (m)
+        <input id="palLargo" type="number" step="0.01" />
       </label>
-      <label>Alto ítem (cm)
-        <input id="itAlto" type="number" value="40">
+
+      <label>Ancho pallet (m)
+        <input id="palAncho" type="number" step="0.01" />
       </label>
-      <label>Peso ítem (kg)
-        <input id="itPeso" type="number" value="20">
+
+      <label>Alto pallet (m)
+        <input id="palAlto" type="number" step="0.01" value="0.7" />
       </label>
-      <label>
-        <input id="rotacion" type="checkbox" checked>
-        Permitir rotar largo/ancho
-      </label>
+
+      <div class="small">
+        * Estos valores se cargan desde “Tipos de Pallet” de tu Excel, pero puedes ajustarlos.
+      </div>
     </div>
   </div>
 
-  <button onclick="calcular()">Calcular cubicado</button>
+  <button onclick="calcular()">Calcular cubicación</button>
 
   <div id="salida" class="resultado"></div>
 
   <script>
-    function calcularConfiguracion(Lc, Ac, Hc, Li, Ai, Hi) {
-      const porLargo = Math.floor(Lc / Li);
-      const porAncho = Math.floor(Ac / Ai);
-      const capas = Math.floor(Hc / Hi);
+    // Datos copiados de tus hojas "Tipos de camiones" y "Tipos de Pallet"
+    const trucks = {
+      hino916: {
+        nombre: "Hino 916",
+        largo: 5.4,
+        ancho: 2.2,
+        alto: 2.1,
+        capacidad: 3800
+      },
+      atego1729: {
+        nombre: "Mercedes-Benz Atego 1729",
+        largo: 7.3,
+        ancho: 2.4,
+        alto: 2.3,
+        capacidad: 11500
+      },
+      volvofl240: {
+        nombre: "Volvo FL 240",
+        largo: 6.2,
+        ancho: 2.3,
+        alto: 2.2,
+        capacidad: 6800
+      }
+    };
 
-      if (porLargo <= 0 || porAncho <= 0 || capas <= 0) return {total: 0};
+    const pallets = {
+      eu: {
+        nombre: "Pallet Europeo",
+        largo: 1.2,
+        ancho: 0.8
+      },
+      us: {
+        nombre: "Pallet Americano",
+        largo: 1.2,
+        ancho: 1.0
+      }
+    };
 
-      const porCapa = porLargo * porAncho;
-      const total = porCapa * capas;
-      return {porLargo, porAncho, capas, porCapa, total};
+    // Cargar valores iniciales al entrar
+    window.addEventListener("load", () => {
+      actualizarCamion();
+      actualizarPallet();
+    });
+
+    document.getElementById("truckSelect").addEventListener("change", actualizarCamion);
+    document.getElementById("palletSelect").addEventListener("change", actualizarPallet);
+
+    function actualizarCamion() {
+      const sel = document.getElementById("truckSelect").value;
+      const t = trucks[sel];
+      document.getElementById("truckLargo").value = t.largo;
+      document.getElementById("truckAncho").value = t.ancho;
+      document.getElementById("truckAlto").value = t.alto;
+      document.getElementById("truckCapacidad").value = t.capacidad;
+    }
+
+    function actualizarPallet() {
+      const sel = document.getElementById("palletSelect").value;
+      const p = pallets[sel];
+      document.getElementById("palLargo").value = p.largo;
+      document.getElementById("palAncho").value = p.ancho;
     }
 
     function calcular() {
-      const Lc = Number(document.getElementById("eqLargo").value);
-      const Ac = Number(document.getElementById("eqAncho").value);
-      const Hc = Number(document.getElementById("eqAlto").value);
-      const pesoMax = Number(document.getElementById("eqPesoMax").value);
+      const Lc = parseFloat(document.getElementById("truckLargo").value);
+      const Ac = parseFloat(document.getElementById("truckAncho").value);
+      const Hc = parseFloat(document.getElementById("truckAlto").value);
+      const capacidadKg = parseFloat(document.getElementById("truckCapacidad").value) || 0;
+      const valorViaje = parseFloat(document.getElementById("valorViaje").value) || 0;
 
-      let Li = Number(document.getElementById("itLargo").value);
-      let Ai = Number(document.getElementById("itAncho").value);
-      let Hi = Number(document.getElementById("itAlto").value);
-      const pesoItem = Number(document.getElementById("itPeso").value);
-      const rotar = document.getElementById("rotacion").checked;
+      const Lp = parseFloat(document.getElementById("palLargo").value);
+      const Ap = parseFloat(document.getElementById("palAncho").value);
+      const Hp = parseFloat(document.getElementById("palAlto").value);
 
-      let config1 = calcularConfiguracion(Lc, Ac, Hc, Li, Ai, Hi);
-      let config2 = {total: 0};
-      if (rotar) {
-        config2 = calcularConfiguracion(Lc, Ac, Hc, Ai, Li, Hi);
-      }
-
-      let mejor = config1.total >= config2.total ? config1 : config2;
-      let usoRotado = config2.total > config1.total;
-
-      if (mejor.total === 0) {
+      if (!Lc || !Ac || !Hc || !Lp || !Ap || !Hp) {
         document.getElementById("salida").innerText =
-          "El ítem no cabe en el equipo con las dimensiones dadas.";
+          "Faltan datos. Revisa que todas las medidas tengan un valor válido.";
         return;
       }
 
-      const volumenItem = Li * Ai * Hi;
-      const volumenEquipo = Lc * Ac * Hc;
-      const volumenUsado = mejor.total * volumenItem;
-      const usoVolumen = volumenUsado / volumenEquipo * 100;
+      // Volúmenes en m3 (tu Excel trabaja en metros)
+      const volPallet = Lp * Ap * Hp;
+      const volCamion = Lc * Ac * Hc;
 
-      const pesoTotal = mejor.total * pesoItem;
-      const usoPeso = pesoTotal / pesoMax * 100;
+      // Cantidad de pallets por dimensión (como D9, E9, F9 en tu Excel)
+      const palletsLargo = Math.floor(Ac / Ap);  // ancho camion / ancho pallet
+      const palletsFondo = Math.floor(Lc / Lp);  // largo camion / largo pallet
+      const palletsAlto = Math.floor(Hc / Hp);   // alto camion / alto pallet
 
-      const texto = `
-Total de ítems que caben: ${mejor.total}
-Ítems por capa: ${mejor.porCapa} ( ${mejor.porLargo} por largo x ${mejor.porAncho} por ancho )
-Capas: ${mejor.capas}
-¿Usó rotación largo/ancho?: ${usoRotado ? "Sí" : "No"}
+      const palletsRejilla = palletsLargo * palletsFondo * palletsAlto;
 
-Volumen equipo: ${(volumenEquipo/1_000_000).toFixed(2)} m³
-Volumen usado: ${(volumenUsado/1_000_000).toFixed(2)} m³
-Uso de volumen: ${usoVolumen.toFixed(1)} %
+      // Máximo por volumen (ROUNDDOWN(H8/G8))
+      const maxPorVolumen = Math.floor(volCamion / volPallet);
 
-Peso total: ${pesoTotal.toFixed(1)} kg
-Peso máximo equipo: ${pesoMax.toFixed(1)} kg
-Uso de peso: ${usoPeso.toFixed(1)} %
-      `;
+      // Fórmula de tu celda H2:
+      let maximo = Math.min(maxPorVolumen, palletsRejilla);
+      if (maximo === 0) maximo = 1;
+
+      // Valor por m3 (como I7 = I4 / H8)
+      const valorPorM3 = volCamion > 0 ? valorViaje / volCamion : 0;
+
+      const texto = [
+        `Camión: ${Lc.toFixed(2)}m (L) x ${Ac.toFixed(2)}m (A) x ${Hc.toFixed(2)}m (H)`,
+        `Pallet: ${Lp.toFixed(2)}m (L) x ${Ap.toFixed(2)}m (A) x ${Hp.toFixed(2)}m (H)`,
+        "",
+        `Volumen pallet: ${volPallet.toFixed(3)} m³`,
+        `Volumen camión: ${volCamion.toFixed(3)} m³`,
+        "",
+        `Pallets por ancho (similar C9/D4): ${palletsLargo}`,
+        `Pallets por largo (similar C7/E4): ${palletsFondo}`,
+        `Pallets por alto (similar B7/F4): ${palletsAlto}`,
+        `Pallets en rejilla (D9*E9*F9): ${palletsRejilla}`,
+        `Máx. por volumen (INT(H8/G8)): ${maxPorVolumen}`,
+        "",
+        `MÁXIMO DE PALLET POR CAMIÓN (como H2): ${maximo}`,
+        "",
+        `Capacidad de carga (kg): ${capacidadKg.toFixed(0)}`,
+        `Valor viaje: ${valorViaje.toFixed(0)} CLP`,
+        `Valor por m³ (I4 / H8): ${valorPorM3.toFixed(0)} CLP/m³`
+      ].join("\n");
+
       document.getElementById("salida").innerText = texto;
     }
   </script>
 </body>
 </html>
+
 
