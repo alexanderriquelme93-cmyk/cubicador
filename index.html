@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 20px auto;
       padding: 10px 20px;
     }
@@ -40,9 +40,6 @@
       margin-top: 2px;
       box-sizing: border-box;
     }
-    input[readonly] {
-      background-color: #f4f4f4;
-    }
     button {
       margin-top: 10px;
       padding: 8px 16px;
@@ -61,13 +58,29 @@
       font-size: 0.8rem;
       color: #555;
     }
+    .status-ok {
+      color: #0a7a0a;
+      font-weight: bold;
+    }
+    .status-bad {
+      color: #b00020;
+      font-weight: bold;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f7f7f7;
+      display: block;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
   <h1>Calculadora de Cubicación</h1>
   <p class="small">
-    Basado en tu archivo Excel: tipos de camiones, tipos de pallet y cálculo de
-    máximo de pallet por camión (rejilla vs volumen).
+    Basado en tu Excel: tipos de camiones, tipos de pallet y cálculo de máximo
+    de pallet por camión (rejilla vs volumen). Ahora incluye cantidad deseada y
+    vista 3D isométrica simple.
   </p>
 
   <div class="grid">
@@ -127,18 +140,30 @@
         <input id="palAlto" type="number" step="0.01" value="0.7" />
       </label>
 
+      <label>Cantidad de pallets que quiero cargar
+        <input id="palDeseados" type="number" step="1" value="0" />
+      </label>
+
       <div class="small">
-        * Estos valores se cargan desde “Tipos de Pallet” de tu Excel, pero puedes ajustarlos.
+        * Si dejas la cantidad en 0, se muestra sólo la capacidad máxima del camión.
       </div>
     </div>
   </div>
 
   <button onclick="calcular()">Calcular cubicación</button>
 
+  <div id="mensaje" class="small" style="margin-top:8px;"></div>
   <div id="salida" class="resultado"></div>
 
+  <h2>Visualización 3D isométrica (simple)</h2>
+  <p class="small">
+    Verde = pallets que estás usando. Gris = capacidad libre hasta el máximo.
+    Vista en planta con altura simulada por niveles.
+  </p>
+  <canvas id="vista3d" width="700" height="420"></canvas>
+
   <script>
-    // Datos copiados de tus hojas "Tipos de camiones" y "Tipos de Pallet"
+    // Datos tomados de tu Excel (tipos de camiones y pallets)
     const trucks = {
       hino916: {
         nombre: "Hino 916",
@@ -180,10 +205,17 @@
     window.addEventListener("load", () => {
       actualizarCamion();
       actualizarPallet();
+      calcular();
     });
 
-    document.getElementById("truckSelect").addEventListener("change", actualizarCamion);
-    document.getElementById("palletSelect").addEventListener("change", actualizarPallet);
+    document.getElementById("truckSelect").addEventListener("change", () => {
+      actualizarCamion();
+      calcular();
+    });
+    document.getElementById("palletSelect").addEventListener("change", () => {
+      actualizarPallet();
+      calcular();
+    });
 
     function actualizarCamion() {
       const sel = document.getElementById("truckSelect").value;
@@ -211,6 +243,7 @@
       const Lp = parseFloat(document.getElementById("palLargo").value);
       const Ap = parseFloat(document.getElementById("palAncho").value);
       const Hp = parseFloat(document.getElementById("palAlto").value);
+      const deseados = parseInt(document.getElementById("palDeseados").value, 10) || 0;
 
       if (!Lc || !Ac || !Hc || !Lp || !Ap || !Hp) {
         document.getElementById("salida").innerText =
@@ -218,26 +251,44 @@
         return;
       }
 
-      // Volúmenes en m3 (tu Excel trabaja en metros)
+      // Volúmenes en m3
       const volPallet = Lp * Ap * Hp;
       const volCamion = Lc * Ac * Hc;
 
-      // Cantidad de pallets por dimensión (como D9, E9, F9 en tu Excel)
-      const palletsLargo = Math.floor(Ac / Ap);  // ancho camion / ancho pallet
-      const palletsFondo = Math.floor(Lc / Lp);  // largo camion / largo pallet
-      const palletsAlto = Math.floor(Hc / Hp);   // alto camion / alto pallet
+      // Cantidad de pallets por dimensión (similar a tu Excel)
+      const palletsAncho = Math.floor(Ac / Ap); // ancho camión / ancho pallet
+      const palletsLargo = Math.floor(Lc / Lp); // largo camión / largo pallet
+      const palletsAlto = Math.floor(Hc / Hp);  // alto camión / alto pallet
 
-      const palletsRejilla = palletsLargo * palletsFondo * palletsAlto;
-
-      // Máximo por volumen (ROUNDDOWN(H8/G8))
+      const palletsRejilla = palletsAncho * palletsLargo * palletsAlto;
       const maxPorVolumen = Math.floor(volCamion / volPallet);
 
-      // Fórmula de tu celda H2:
       let maximo = Math.min(maxPorVolumen, palletsRejilla);
-      if (maximo === 0) maximo = 1;
+      if (maximo === 0) maximo = 1; // igual que tu Excel fuerza al menos 1
 
-      // Valor por m3 (como I7 = I4 / H8)
       const valorPorM3 = volCamion > 0 ? valorViaje / volCamion : 0;
+
+      // Mensaje de si caben o no los deseados
+      let mensaje = "";
+      if (deseados <= 0) {
+        mensaje =
+          "No ingresaste cantidad de pallets, se muestra solo la capacidad máxima del camión.";
+      } else if (deseados <= maximo) {
+        mensaje =
+          `👉 Los ${deseados} pallets que quieres C A B E N en este camión (máximo permitido: ${maximo}).`;
+      } else {
+        mensaje =
+          `⚠ Los ${deseados} pallets que quieres NO CABEN. Capacidad máxima de este camión: ${maximo}.`;
+      }
+
+      const mensajeDiv = document.getElementById("mensaje");
+      mensajeDiv.textContent = mensaje;
+      mensajeDiv.className =
+        deseados === 0
+          ? "small"
+          : deseados <= maximo
+          ? "small status-ok"
+          : "small status-bad";
 
       const texto = [
         `Camión: ${Lc.toFixed(2)}m (L) x ${Ac.toFixed(2)}m (A) x ${Hc.toFixed(2)}m (H)`,
@@ -246,20 +297,136 @@
         `Volumen pallet: ${volPallet.toFixed(3)} m³`,
         `Volumen camión: ${volCamion.toFixed(3)} m³`,
         "",
-        `Pallets por ancho (similar C9/D4): ${palletsLargo}`,
-        `Pallets por largo (similar C7/E4): ${palletsFondo}`,
-        `Pallets por alto (similar B7/F4): ${palletsAlto}`,
-        `Pallets en rejilla (D9*E9*F9): ${palletsRejilla}`,
-        `Máx. por volumen (INT(H8/G8)): ${maxPorVolumen}`,
+        `Pallets por ancho:  ${palletsAncho}`,
+        `Pallets por largo:  ${palletsLargo}`,
+        `Pallets por alto:   ${palletsAlto}`,
+        `Pallets en rejilla (ancho × largo × alto): ${palletsRejilla}`,
+        `Máx. por volumen (INT(volCamion/volPallet)): ${maxPorVolumen}`,
         "",
-        `MÁXIMO DE PALLET POR CAMIÓN (como H2): ${maximo}`,
+        `MÁXIMO DE PALLET POR CAMIÓN: ${maximo}`,
+        deseados > 0 ? `Pallets deseados: ${deseados}` : "",
         "",
         `Capacidad de carga (kg): ${capacidadKg.toFixed(0)}`,
         `Valor viaje: ${valorViaje.toFixed(0)} CLP`,
-        `Valor por m³ (I4 / H8): ${valorPorM3.toFixed(0)} CLP/m³`
+        `Valor por m³: ${valorPorM3.toFixed(0)} CLP/m³`
       ].join("\n");
 
       document.getElementById("salida").innerText = texto;
+
+      // Dibujar la vista 3D
+      const capasDibujo = Math.max(palletsAlto, 1);
+      dibujar3D(palletsLargo, palletsAncho, capasDibujo, maximo, deseados);
+    }
+
+    // === DIBUJO 3D ISOMÉTRICO SIMPLE ===
+    function dibujar3D(cols, rows, niveles, maximo, deseados) {
+      const canvas = document.getElementById("vista3d");
+      const ctx = canvas.getContext("2d");
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Parámetros de proyección isométrica
+      const tileW = 40;
+      const tileH = 20;
+      const palletHeight = 12;
+
+      const originX = canvas.width / 2;
+      const originY = 60;
+
+      // Función de conversión a iso
+      function iso(x, y, z) {
+        return {
+          x: originX + (x - y) * tileW / 2,
+          y: originY + (x + y) * tileH / 2 - z * palletHeight
+        };
+      }
+
+      // Dibujar "suelo" del camión
+      const esquina1 = iso(0, 0, 0);
+      const esquina2 = iso(cols, 0, 0);
+      const esquina3 = iso(cols, rows, 0);
+      const esquina4 = iso(0, rows, 0);
+
+      ctx.beginPath();
+      ctx.moveTo(esquina1.x, esquina1.y);
+      ctx.lineTo(esquina2.x, esquina2.y);
+      ctx.lineTo(esquina3.x, esquina3.y);
+      ctx.lineTo(esquina4.x, esquina4.y);
+      ctx.closePath();
+      ctx.fillStyle = "#e0e0e0";
+      ctx.fill();
+      ctx.strokeStyle = "#999";
+      ctx.stroke();
+
+      // Cuántos pallets vamos a dibujar como "ocupados"
+      const usados =
+        deseados > 0 ? Math.min(deseados, maximo) : maximo;
+      const total = maximo;
+
+      // Función para dibujar un pallet 3D
+      function dibujarPallet(ix, iy, iz, ocupado) {
+        const p0 = iso(ix, iy, iz);
+        const p1 = iso(ix + 1, iy, iz);
+        const p2 = iso(ix + 1, iy + 1, iz);
+        const p3 = iso(ix, iy + 1, iz);
+        const p4 = iso(ix, iy, iz + 1);
+        const p5 = iso(ix + 1, iy, iz + 1);
+        const p6 = iso(ix + 1, iy + 1, iz + 1);
+        const p7 = iso(ix, iy + 1, iz + 1);
+
+        // Colores
+        const colorTop = ocupado ? "#4caf50" : "#cfd8dc";
+        const colorLeft = ocupado ? "#388e3c" : "#b0bec5";
+        const colorRight = ocupado ? "#66bb6a" : "#e0e0e0";
+
+        // Cara superior
+        ctx.beginPath();
+        ctx.moveTo(p4.x, p4.y);
+        ctx.lineTo(p5.x, p5.y);
+        ctx.lineTo(p6.x, p6.y);
+        ctx.lineTo(p7.x, p7.y);
+        ctx.closePath();
+        ctx.fillStyle = colorTop;
+        ctx.fill();
+        ctx.strokeStyle = "#555";
+        ctx.stroke();
+
+        // Cara izquierda
+        ctx.beginPath();
+        ctx.moveTo(p4.x, p4.y);
+        ctx.lineTo(p7.x, p7.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p0.x, p0.y);
+        ctx.closePath();
+        ctx.fillStyle = colorLeft;
+        ctx.fill();
+        ctx.stroke();
+
+        // Cara derecha
+        ctx.beginPath();
+        ctx.moveTo(p5.x, p5.y);
+        ctx.lineTo(p6.x, p6.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.closePath();
+        ctx.fillStyle = colorRight;
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Recorremos pallets en orden de atrás hacia adelante (para el dibujo)
+      const layerSize = cols * rows;
+      const totalADibujar = Math.min(total, cols * rows * niveles);
+
+      for (let idx = totalADibujar - 1; idx >= 0; idx--) {
+        const z = Math.floor(idx / layerSize);
+        const resto = idx % layerSize;
+        const y = Math.floor(resto / cols); // filas (ancho)
+        const x = resto % cols;            // columnas (largo)
+
+        const ocupado = idx < usados;
+        dibujarPallet(x, y, z, ocupado);
+      }
     }
   </script>
 </body>
