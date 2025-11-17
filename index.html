@@ -46,8 +46,6 @@
       cursor: pointer;
     }
     .resultado {
-      white-space: pre-wrap;
-      font-family: Consolas, monospace;
       margin-top: 8px;
       padding: 10px;
       border-radius: 6px;
@@ -65,6 +63,25 @@
     .status-bad {
       color: #b00020;
       font-weight: bold;
+    }
+    table.resumen {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 6px;
+    }
+    table.resumen th,
+    table.resumen td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    table.resumen th:first-child,
+    table.resumen td:first-child {
+      text-align: left;
+    }
+    table.resumen th {
+      background: #eee;
     }
   </style>
 </head>
@@ -208,7 +225,7 @@
       palAncho.value = p.ancho;
     }
 
-    // Calcula capacidad máxima de pallets para UN camión dado sus medidas
+    // Calcula capacidad máxima de pallets para un camión
     function capacidadPalletsCamion(Lc, Ac, Hc, Lp, Ap, Hp) {
       const volPallet = Lp * Ap * Hp;
       const volCamion = Lc * Ac * Hc;
@@ -256,7 +273,6 @@
       return mejor;
     }
 
-    // Cálculo principal y salida de texto
     function calcular() {
       const Lc = parseFloat(truckLargo.value);
       const Ac = parseFloat(truckAncho.value);
@@ -270,8 +286,8 @@
       const deseados = parseInt(palDeseados.value, 10) || 0;
 
       if (!Lc || !Ac || !Hc || !Lp || !Ap || !Hp) {
-        salida.innerText = "Faltan datos. Revisa que todas las medidas tengan un valor válido.";
-        mensaje.textContent = "";
+        salida.innerHTML = "";
+        mensaje.textContent = "Faltan datos. Revisa que todas las medidas tengan un valor válido.";
         sugerenciaDiv.textContent = "";
         return;
       }
@@ -290,6 +306,7 @@
 
       const valorPorM3 = volCamion > 0 ? valorViaje / volCamion : 0;
 
+      // mensaje principal
       let mensajeTexto = "";
       if (deseados <= 0) {
         mensajeTexto = "No ingresaste cantidad de pallets, se muestra solo la capacidad máxima del camión.";
@@ -307,45 +324,57 @@
           ? "small status-ok"
           : "small status-bad";
 
-      // Sugerencia de transporte si no cabe
+      // sugerencia de transporte
       let sugerenciaTexto = "";
       if (deseados > 0 && deseados > maximo) {
         const sugerido = sugerirTransporte(deseados, Lp, Ap, Hp);
         if (sugerido) {
           sugerenciaTexto =
-            `Sugerencia de transporte: usar "${sugerido.nombre}", con capacidad aproximada de ` +
+            `Sugerencia de transporte: usar "${sugerido.nombre}", con capacidad aprox. de ` +
             `${sugerido.capacidadPallets} pallets para estas dimensiones.`;
         } else {
           sugerenciaTexto =
             "No se encontró un tipo de transporte en la lista que pueda cargar esa cantidad de pallets con estas dimensiones.";
         }
-      } else {
-        sugerenciaTexto = ""; // puedes poner un mensaje neutro si quieres
       }
       sugerenciaDiv.textContent = sugerenciaTexto;
 
-      const texto = [
-        `Camión: ${Lc.toFixed(2)}m (L) x ${Ac.toFixed(2)}m (A) x ${Hc.toFixed(2)}m (H)`,
-        `Pallet: ${Lp.toFixed(2)}m (L) x ${Ap.toFixed(2)}m (A) x ${Hp.toFixed(2)}m (H)`,
-        "",
-        `Volumen pallet: ${volPallet.toFixed(3)} m³`,
-        `Volumen camión: ${volCamion.toFixed(3)} m³`,
-        "",
-        `Pallets por ancho:  ${palletsAncho}`,
-        `Pallets por largo:  ${palletsLargo}`,
-        `Pallets por alto:   ${palletsAlto}`,
-        `Pallets en rejilla (ancho × largo × alto): ${palletsRejilla}`,
-        `Máx. por volumen (INT(volCamion/volPallet)): ${maxPorVolumen}`,
-        "",
-        `MÁXIMO DE PALLET POR CAMIÓN: ${maximo}`,
-        deseados > 0 ? `Pallets deseados: ${deseados}` : "",
-        "",
-        `Capacidad de carga (kg): ${capacidadKg.toFixed(0)}`,
-        `Valor viaje: ${valorViaje.toFixed(0)} CLP`,
-        `Valor por m³: ${valorPorM3.toFixed(0)} CLP/m³`
-      ].join("\n");
+      // === TABLA DE USO NUMÉRICO Y PORCENTUAL ===
+      const usadosPallets = deseados > 0 ? Math.min(deseados, maximo) : 0;
+      const usoPallets = maximo > 0 ? (usadosPallets / maximo) * 100 : 0;
 
-      salida.innerText = texto;
+      const volUsado = usadosPallets * volPallet;
+      const usoVol = volCamion > 0 ? (volUsado / volCamion) * 100 : 0;
+
+      const tablaHTML = `
+        <table class="resumen">
+          <tr>
+            <th>Concepto</th>
+            <th>Usado</th>
+            <th>Capacidad</th>
+            <th>Uso (%)</th>
+          </tr>
+          <tr>
+            <td>Pallets</td>
+            <td>${usadosPallets}</td>
+            <td>${maximo}</td>
+            <td>${usoPallets.toFixed(1)} %</td>
+          </tr>
+          <tr>
+            <td>Volumen (m³)</td>
+            <td>${volUsado.toFixed(3)}</td>
+            <td>${volCamion.toFixed(3)}</td>
+            <td>${usoVol.toFixed(1)} %</td>
+          </tr>
+        </table>
+        <p class="small">
+          Camión: ${Lc.toFixed(2)}m (L) × ${Ac.toFixed(2)}m (A) × ${Hc.toFixed(2)}m (H) |
+          Pallet: ${Lp.toFixed(2)}m (L) × ${Ap.toFixed(2)}m (A) × ${Hp.toFixed(2)}m (H) |
+          Valor por m³: ${valorPorM3.toFixed(0)} CLP/m³
+        </p>
+      `;
+
+      salida.innerHTML = tablaHTML;
     }
   </script>
 </body>
