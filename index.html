@@ -88,12 +88,9 @@
 <body>
   <h1>Calculadora de Cubicación</h1>
   <p class="small">
-    Basado en tu Excel: tipos de camiones, tipos de pallet y cálculo de máximo
-    de pallets por camión (rejilla vs volumen). Considera niveles apilables,
-    sugiere tipo de transporte y calcula cuántos camiones necesitas si te pasas.
+    Calculadora para camiones / contenedores según medidas y pallets. Incluye niveles apilables y sugerencias de transporte.
   </p>
 
-  <!-- CAMPO DESTACADO DE CANTIDAD DE PALLETS -->
   <h2 style="margin-top:20px;">Cantidad de pallets que quiero cargar</h2>
   <div style="margin-bottom:18px;">
     <input
@@ -193,26 +190,27 @@
   <div id="salida" class="resultado"></div>
 
   <script>
-    // Datos base: camiones / contenedores
+    // Datos de camiones
     const trucks = {
-      hino916: { nombre: "Hino 916", largo: 5.4, ancho: 2.2, alto: 2.1, capacidad: 3800 },
-      atego1729: { nombre: "Mercedes-Benz Atego 1729", largo: 7.3, ancho: 2.4, alto: 2.3, capacidad: 11500 },
-      volvofl240: { nombre: "Volvo FL 240", largo: 6.2, ancho: 2.3, alto: 2.2, capacidad: 6800 },
-      camion34: { nombre: "Camión 3/4", largo: 4.5, ancho: 2.2, alto: 2.1, capacidad: 3000 },
-      camionSimple: { nombre: "Camión Simple", largo: 7.0, ancho: 2.4, alto: 2.4, capacidad: 10000 },
-      camionRampla: { nombre: "Camión Rampla 40'", largo: 12.5, ancho: 2.4, alto: 2.4, capacidad: 28000 },
-      camionTermico: { nombre: "Camión Térmico", largo: 8.0, ancho: 2.4, alto: 2.5, capacidad: 12000 },
-      camionHighCube: { nombre: "Contenedor High Cube 40'", largo: 12.03, ancho: 2.35, alto: 2.69, capacidad: 26000 },
-      contenedor20: { nombre: "Contenedor 20'", largo: 5.90, ancho: 2.35, alto: 2.39, capacidad: 28000 },
-      contenedor40: { nombre: "Contenedor 40'", largo: 12.03, ancho: 2.35, alto: 2.39, capacidad: 30000 }
+      hino916: { nombre:"Hino 916", largo:5.4, ancho:2.2, alto:2.1, capacidad:3800 },
+      atego1729: { nombre:"Mercedes-Benz Atego 1729", largo:7.3, ancho:2.4, alto:2.3, capacidad:11500 },
+      volvofl240: { nombre:"Volvo FL 240", largo:6.2, ancho:2.3, alto:2.2, capacidad:6800 },
+      camion34: { nombre:"Camión 3/4", largo:4.5, ancho:2.2, alto:2.1, capacidad:3000 },
+      camionSimple: { nombre:"Camión Simple", largo:7.0, ancho:2.4, alto:2.4, capacidad:10000 },
+      camionRampla: { nombre:"Camión Rampla 40'", largo:12.5, ancho:2.4, alto:2.4, capacidad:28000 },
+      camionTermico: { nombre:"Camión Térmico", largo:8.0, ancho:2.4, alto:2.5, capacidad:12000 },
+      camionHighCube: { nombre:"Contenedor High Cube 40'", largo:12.03, ancho:2.35, alto:2.69, capacidad:26000 },
+      contenedor20: { nombre:"Contenedor 20'", largo:5.90, ancho:2.35, alto:2.39, capacidad:28000 },
+      contenedor40: { nombre:"Contenedor 40'", largo:12.03, ancho:2.35, alto:2.39, capacidad:30000 }
     };
 
+    // Pallets
     const pallets = {
-      eu: { nombre: "Pallet Europeo", largo: 1.2, ancho: 0.8 },
-      us: { nombre: "Pallet Americano", largo: 1.2, ancho: 1.0 }
+      eu: { nombre:"Pallet Europeo", largo:1.2, ancho:0.8 },
+      us: { nombre:"Pallet Americano", largo:1.2, ancho:1.0 }
     };
 
-    // Referencias a inputs
+    // Inputs
     const truckSelect = document.getElementById("truckSelect");
     const truckLargo = document.getElementById("truckLargo");
     const truckAncho = document.getElementById("truckAncho");
@@ -224,64 +222,53 @@
     const palAlto = document.getElementById("palAlto");
     const palDeseados = document.getElementById("palDeseados");
     const nivelesApilablesInput = document.getElementById("nivelesApilables");
+
     const salida = document.getElementById("salida");
     const mensaje = document.getElementById("mensaje");
     const sugerenciaDiv = document.getElementById("sugerencia");
 
-    // Inicialización
     window.addEventListener("load", () => {
       actualizarCamion();
       actualizarPallet();
       calcular();
     });
 
-    truckSelect.addEventListener("change", () => {
-      actualizarCamion();
-      calcular();
-    });
-    document.getElementById("palletSelect").addEventListener("change", () => {
-      actualizarPallet();
-      calcular();
-    });
+    truckSelect.addEventListener("change", () => { actualizarCamion(); calcular(); });
+    document.getElementById("palletSelect").addEventListener("change", () => { actualizarPallet(); calcular(); });
     nivelesApilablesInput.addEventListener("input", calcular);
-    palDeseados.addEventListener("input", calcular);
-    valorViajeInput.addEventListener("input", calcular);
 
-    function actualizarCamion() {
-      const sel = truckSelect.value;
-      const t = trucks[sel];
-      truckLargo.value = t.largo;
-      truckAncho.value = t.ancho;
-      truckAlto.value = t.alto;
-      truckCapacidad.value = t.capacidad;
+    function actualizarCamion(){
+      const t = trucks[truckSelect.value];
+      truckLargo.value=t.largo;
+      truckAncho.value=t.ancho;
+      truckAlto.value=t.alto;
+      truckCapacidad.value=t.capacidad;
     }
 
-    function actualizarPallet() {
-      const sel = document.getElementById("palletSelect").value;
-      const p = pallets[sel];
-      palLargo.value = p.largo;
-      palAncho.value = p.ancho;
+    function actualizarPallet(){
+      const p = pallets[document.getElementById("palletSelect").value];
+      palLargo.value=p.largo;
+      palAncho.value=p.ancho;
     }
 
-    // Capacidad de pallets
-    function capacidadPalletsCamion(Lc, Ac, Hc, Lp, Ap, Hp, nivelesApilables) {
-      const volPallet = Lp * Ap * Hp;
-      const volCamion = Lc * Ac * Hc;
+    function capacidadPalletsCamion(Lc,Ac,Hc,Lp,Ap,Hp,nivelesApilables){
+      const volPallet = Lp*Ap*Hp;
+      const volCamion = Lc*Ac*Hc;
 
-      const palletsAncho = Math.floor(Ac / Ap);
-      const palletsLargo = Math.floor(Lc / Lp);
+      const palletsAncho = Math.floor(Ac/Ap);
+      const palletsLargo = Math.floor(Lc/Lp);
 
-      const nivelesMaxGeom = Math.floor(Hc / Hp);
-      const nivelesValidos = Math.max(1, Math.floor(nivelesApilables || 1));
-      const palletsAlto = Math.min(nivelesMaxGeom, nivelesValidos);
+      const nivelesMaxGeom = Math.floor(Hc/Hp);
+      const nivelesValidos = Math.max(1, Math.floor(nivelesApilables));
+      const palletsAlto = Math.min(nivelesMaxGeom,nivelesValidos);
 
-      const palletsRejilla = palletsAncho * palletsLargo * palletsAlto;
-      const maxPorVolumen = Math.floor(volCamion / volPallet);
+      const palletsRejilla = palletsAncho*palletsLargo*palletsAlto;
+      const maxPorVolumen = Math.floor(volCamion/volPallet);
 
-      let maximo = Math.min(maxPorVolumen, palletsRejilla);
-      if (maximo === 0) maximo = 1;
+      let maximo = Math.min(maxPorVolumen,palletsRejilla);
+      if(maximo===0) maximo=1;
 
-      return {
+      return{
         maximo,
         palletsAncho,
         palletsLargo,
@@ -293,184 +280,76 @@
       };
     }
 
-    // Sugerir camión
-    function sugerirTransporte(deseados, Lp, Ap, Hp, nivelesApilables) {
-      if (deseados <= 0) return null;
+    function sugerirTransporte(deseados,Lp,Ap,Hp,niveles){
+      if(deseados<=0)return null;
 
-      let mejor = null;
+      let mejor=null;
 
-      for (const key in trucks) {
-        const t = trucks[key];
-        const cap = capacidadPalletsCamion(
-          t.largo,
-          t.ancho,
-          t.alto,
-          Lp,
-          Ap,
-          Hp,
-          nivelesApilables
-        ).maximo;
+      for(const k in trucks){
+        const t=trucks[k];
+        const c=capacidadPalletsCamion(t.largo,t.ancho,t.alto,Lp,Ap,Hp,niveles).maximo;
 
-        if (cap >= deseados) {
-          if (!mejor || cap < mejor.capacidadPallets) {
-            mejor = {
-              id: key,
-              nombre: t.nombre,
-              capacidadPallets: cap
-            };
+        if(c>=deseados){
+          if(!mejor || c<mejor.capacidadPallets){
+            mejor={ id:k, nombre:t.nombre, capacidadPallets:c };
           }
         }
       }
       return mejor;
     }
 
-    function calcular() {
-      const Lc = parseFloat(truckLargo.value);
-      const Ac = parseFloat(truckAncho.value);
-      const Hc = parseFloat(truckAlto.value);
-      const capacidadKg = parseFloat(truckCapacidad.value) || 0;
-      const valorViaje = parseFloat(valorViajeInput.value) || 0;
+    function calcular(){
+      const Lc=parseFloat(truckLargo.value);
+      const Ac=parseFloat(truckAncho.value);
+      const Hc=parseFloat(truckAlto.value);
+      const valorViaje=parseFloat(valorViajeInput.value)||0;
 
-      const Lp = parseFloat(palLargo.value);
-      const Ap = parseFloat(palAncho.value);
-      const Hp = parseFloat(palAlto.value);
-      const deseados = parseInt(palDeseados.value, 10) || 0;
-      const nivelesApilables = parseInt(nivelesApilablesInput.value, 10) || 1;
+      const Lp=parseFloat(palLargo.value);
+      const Ap=parseFloat(palAncho.value);
+      const Hp=parseFloat(palAlto.value);
+      const deseados=parseInt(palDeseados.value)||0;
+      const niveles=parseInt(nivelesApilablesInput.value)||1;
 
-      if (!Lc || !Ac || !Hc || !Lp || !Ap || !Hp) {
-        salida.innerHTML = "";
-        mensaje.textContent = "Faltan datos. Revisa que todas las medidas tengan un valor válido.";
-        sugerenciaDiv.textContent = "";
-        return;
-      }
-
-      // Restricción: alto pallet no puede ser mayor que alto camión
-      if (Hp > Hc) {
-        mensaje.textContent = `⚠ El alto del pallet (${Hp} m) NO puede ser mayor que el alto interno del camión (${Hc} m).`;
+      // RESTRICCIÓN 📌📌📌
+      const alturaTotal = Hp * niveles;
+      if (alturaTotal > Hc) {
+        mensaje.textContent =
+          `⚠ ERROR: La altura total apilada (${alturaTotal.toFixed(2)} m) ` +
+          `supera la altura interna del camión (${Hc} m). Reduce niveles o altura del pallet.`;
         mensaje.className = "small status-bad";
         salida.innerHTML = "";
         sugerenciaDiv.textContent = "";
-        return;
+        return; // BLOQUEA CÁLCULO
       }
 
-      const datos = capacidadPalletsCamion(
-        Lc,
-        Ac,
-        Hc,
-        Lp,
-        Ap,
-        Hp,
-        nivelesApilables
-      );
+      const datos=capacidadPalletsCamion(Lc,Ac,Hc,Lp,Ap,Hp,niveles);
+      const {maximo,palletsAncho,palletsLargo,palletsAlto,volPallet,volCamion}=datos;
 
-      const {
-        maximo,
-        palletsAncho,
-        palletsLargo,
-        palletsAlto,
-        volPallet,
-        volCamion,
-        maxPorVolumen,
-        palletsRejilla
-      } = datos;
+      // Valor por m³
+      const valorPorM3 = volCamion>0 ? valorViaje/volCamion : 0;
 
-      // Valor del metro cúbico = Valor viaje / m³ del camión
-      const valorPorM3 = volCamion > 0 ? valorViaje / volCamion : 0;
-
-      // mensaje principal
-      let mensajeTexto = "";
-      if (deseados <= 0) {
-        mensajeTexto = "No ingresaste cantidad de pallets, se muestra solo la capacidad máxima del camión.";
-      } else if (deseados <= maximo) {
-        mensajeTexto = `👉 Los ${deseados} pallets que quieres C A B E N en este camión (máximo permitido: ${maximo}).`;
+      let msg="";
+      if(deseados<=maximo){
+        msg=`Los ${deseados} pallets CABEN.`;
       } else {
-        mensajeTexto = `⚠ Los ${deseados} pallets que quieres NO CABEN. Capacidad máxima de este camión: ${maximo}.`;
-        if (maximo > 0) {
-          const camionesNecesarios = Math.ceil(deseados / maximo);
-          mensajeTexto += ` Necesitas aproximadamente ${camionesNecesarios} camión(es) de este mismo tipo para transportar los ${deseados} pallets.`;
-        }
+        msg=`⚠ Los ${deseados} pallets NO CABEN. Capacidad máxima: ${maximo}.`;
       }
 
-      mensaje.textContent = mensajeTexto;
-      mensaje.className =
-        deseados === 0
-          ? "small"
-          : deseados <= maximo
-          ? "small status-ok"
-          : "small status-bad";
+      mensaje.textContent=msg;
+      mensaje.className=deseados<=maximo?"small status-ok":"small status-bad";
 
-      // sugerencia de transporte
-      let sugerenciaTexto = "";
-      if (deseados > 0) {
-        const sugerido = sugerirTransporte(deseados, Lp, Ap, Hp, nivelesApilables);
-        const idActual = truckSelect.value;
-
-        if (deseados > maximo) {
-          if (sugerido) {
-            sugerenciaTexto =
-              `Sugerencia de transporte: el camión seleccionado no alcanza. ` +
-              `Podrías usar "${sugerido.nombre}", con capacidad aprox. de ` +
-              `${sugerido.capacidadPallets} pallets para estas dimensiones ` +
-              `(considerando hasta ${nivelesApilables} nivel(es) apilables).`;
-          } else {
-            sugerenciaTexto =
-              "No se encontró un tipo de transporte en la lista que pueda cargar esa cantidad de pallets con estas dimensiones.";
-          }
-        } else {
-          if (sugerido && sugerido.id !== idActual && sugerido.capacidadPallets < maximo) {
-            sugerenciaTexto =
-              `Sugerencia de optimización: con ${deseados} pallets podrías usar un camión más pequeño, ` +
-              `por ejemplo "${sugerido.nombre}" (capacidad aprox. ${sugerido.capacidadPallets} pallets, ` +
-              `hasta ${nivelesApilables} nivel(es) apilables).`;
-          } else {
-            sugerenciaTexto =
-              "El tipo de camión seleccionado es adecuado para esta cantidad de pallets.";
-          }
-        }
-      }
-      sugerenciaDiv.textContent = sugerenciaTexto;
-
-      // === TABLA DE USO NUMÉRICO Y PORCENTUAL + VALOR M³ ===
-      const usadosPallets = deseados > 0 ? Math.min(deseados, maximo) : 0;
-      const usoPallets = maximo > 0 ? (usadosPallets / maximo) * 100 : 0;
-
-      const volUsado = usadosPallets * volPallet;
-      const usoVol = volCamion > 0 ? (volUsado / volCamion) * 100 : 0;
-
-      const tablaHTML = `
-        <p class="small">
-          <strong>Valor del metro cúbico del camión seleccionado:</strong>
-          ${isFinite(valorPorM3) ? valorPorM3.toFixed(0) : 0} CLP/m³
-          (Valor viaje / volumen total del camión).
-        </p>
+      salida.innerHTML = `
+        <p class="small"><b>Valor m³:</b> ${valorPorM3.toFixed(0)} CLP/m³</p>
         <table class="resumen">
-          <tr>
-            <th>Concepto</th>
-            <th>Usado</th>
-            <th>Capacidad</th>
-            <th>Uso (%)</th>
-          </tr>
-          <tr>
-            <td>Pallets</td>
-            <td>${usadosPallets}</td>
-            <td>${maximo}</td>
-            <td>${usoPallets.toFixed(1)} %</td>
-          </tr>
-          <tr>
-            <td>Volumen (m³)</td>
-            <td>${volUsado.toFixed(3)}</td>
-            <td>${volCamion.toFixed(3)}</td>
-            <td>${usoVol.toFixed(1)} %</td>
-          </tr>
+          <tr><th>Concepto</th><th>Valor</th></tr>
+          <tr><td>Pallets máximo</td><td>${maximo}</td></tr>
+          <tr><td>Volumen camión (m³)</td><td>${volCamion.toFixed(2)}</td></tr>
+          <tr><td>Volumen pallet (m³)</td><td>${volPallet.toFixed(2)}</td></tr>
+          <tr><td>Pallets por ancho</td><td>${palletsAncho}</td></tr>
+          <tr><td>Pallets por largo</td><td>${palletsLargo}</td></tr>
+          <tr><td>Niveles usados</td><td>${palletsAlto}</td></tr>
         </table>
-        <p class="small">
-          Camión: ${Lc.toFixed(2)}m (L) × ${Ac.toFixed(2)}m (A) × ${Hc.toFixed(2)}m (H) |
-          Pallet: ${Lp.toFixed(2)}m (L) × ${Ap.toFixed(2)}m (A) × ${Hp.toFixed(2)}m (H) |
-          Niveles apilables: ${nivelesApilables}
-        </p>
       `;
-
-      salida.innerHTML = tablaHTML;
     }
   </script>
 </body>
