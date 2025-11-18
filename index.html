@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Calculadora de Cubicación</title>
-   <style>
+
+  <style>
     body {
       font-family: Arial, sans-serif;
       max-width: 1100px;
@@ -53,22 +54,22 @@
       background: #fafafa;
     }
 
-    /* 🔵 ESTA ES LA SECCIÓN QUE DEBES MODIFICAR 🔵 */
+    /* 🔵 SECCIÓN QUE AGRANDÉ 🔵 */
     .small {
-      font-size: 0.8rem;   /* <--- AUMENTA ESTE VALOR */
+      font-size: 1.2rem;      /* 🔥 AGRANDADO */
       color: #555;
     }
     .status-ok {
       color: #0a7a0a;
       font-weight: bold;
-      /* puedes agregar font-size aquí si quieres agrandar más */
+      font-size: 1.25rem;     /* 🔥 AGRANDADO */
     }
     .status-bad {
       color: #b00020;
       font-weight: bold;
-      /* puedes agregar font-size aquí si quieres agrandar más */
+      font-size: 1.25rem;     /* 🔥 AGRANDADO */
     }
-    /* 🔵 FIN DE LA SECCIÓN A MODIFICAR 🔵 */
+    /* 🔵 FIN DE LA SECCIÓN MODIFICADA 🔵 */
 
     table.resumen {
       border-collapse: collapse;
@@ -91,6 +92,7 @@
     }
   </style>
 </head>
+
 <body>
   <h1>Calculadora de Cubicación</h1>
   <p class="small">
@@ -98,6 +100,30 @@
     de pallets por camión (rejilla vs volumen). Considera niveles apilables,
     sugiere tipo de transporte y calcula cuántos camiones necesitas si te pasas.
   </p>
+
+  <!-- CANTIDAD -->
+  <h2 style="margin-top:20px;">Cantidad de pallets que quiero cargar</h2>
+  <div style="margin-bottom:18px;">
+    <input
+      id="palDeseados"
+      type="number"
+      step="1"
+      value="0"
+      style="
+        font-size:1.4rem;
+        padding:8px 10px;
+        width:200px;
+        border:2px solid #444;
+        border-radius:6px;
+        font-weight:bold;
+      "
+    />
+    <div class="small" style="margin-top:4px;">
+      * Si dejas la cantidad en 0, se muestra solo la capacidad máxima del camión.
+    </div>
+  </div>
+
+  <div class="grid">
 
   <!-- CAMPO DESTACADO DE CANTIDAD DE PALLETS -->
   <h2 style="margin-top:20px;">Cantidad de pallets que quiero cargar</h2>
