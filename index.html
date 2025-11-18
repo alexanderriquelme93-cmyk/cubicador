@@ -86,9 +86,20 @@
   </style>
 </head>
 <body>
+
+  <!-- LOGOS -->
+  <div style="display:flex; justify-content:center; align-items:center; gap:40px; margin-bottom:20px;">
+      <img src="sanderson.png" alt="Laboratorio Sanderson" style="height:80px;">
+      <img src="duocuc.png" alt="DUOC UC" style="height:70px;">
+  </div>
+
   <h1>Calculadora de Cubicación</h1>
-  
-  <!-- CAMPO DESTACADO DE CANTIDAD DE PALLETS -->
+  <p class="small">
+    Basado en tu Excel: tipos de camiones, tipos de pallet y cálculo de máximo
+    de pallets por camión (rejilla vs volumen). Considera niveles apilables,
+    sugiere tipo de transporte y calcula cuántos camiones necesitas si te pasas.
+  </p>
+
   <h2 style="margin-top:20px;">Cantidad de pallets que quiero cargar</h2>
   <div style="margin-bottom:18px;">
     <input
@@ -111,7 +122,6 @@
   </div>
 
   <div class="grid">
-    <!-- CAMIÓN -->
     <div class="card">
       <h2>Camión / Contenedor</h2>
 
@@ -151,7 +161,6 @@
       </label>
     </div>
 
-    <!-- PALLET -->
     <div class="card">
       <h2>Pallet</h2>
 
@@ -174,7 +183,6 @@
         <input id="palAlto" type="number" step="0.01" value="0.7" />
       </label>
 
-      <!-- NUEVO: NIVELES APILABLES -->
       <label>Niveles apilables máximos
         <input id="nivelesApilables" type="number" step="1" min="1" value="1" />
       </label>
@@ -188,7 +196,6 @@
   <div id="salida" class="resultado"></div>
 
   <script>
-    // Datos base: camiones / contenedores
     const trucks = {
       hino916: { nombre: "Hino 916", largo: 5.4, ancho: 2.2, alto: 2.1, capacidad: 3800 },
       atego1729: { nombre: "Mercedes-Benz Atego 1729", largo: 7.3, ancho: 2.4, alto: 2.3, capacidad: 11500 },
@@ -207,23 +214,23 @@
       us: { nombre: "Pallet Americano", largo: 1.2, ancho: 1.0 }
     };
 
-    // Referencias a inputs
     const truckSelect = document.getElementById("truckSelect");
     const truckLargo = document.getElementById("truckLargo");
     const truckAncho = document.getElementById("truckAncho");
     const truckAlto = document.getElementById("truckAlto");
     const truckCapacidad = document.getElementById("truckCapacidad");
     const valorViajeInput = document.getElementById("valorViaje");
+
     const palLargo = document.getElementById("palLargo");
     const palAncho = document.getElementById("palAncho");
     const palAlto = document.getElementById("palAlto");
     const palDeseados = document.getElementById("palDeseados");
     const nivelesApilablesInput = document.getElementById("nivelesApilables");
+
     const salida = document.getElementById("salida");
     const mensaje = document.getElementById("mensaje");
     const sugerenciaDiv = document.getElementById("sugerencia");
 
-    // Inicialización de formulario
     window.addEventListener("load", () => {
       actualizarCamion();
       actualizarPallet();
@@ -234,10 +241,12 @@
       actualizarCamion();
       calcular();
     });
+
     document.getElementById("palletSelect").addEventListener("change", () => {
       actualizarPallet();
       calcular();
     });
+
     nivelesApilablesInput.addEventListener("input", calcular);
     palDeseados.addEventListener("input", calcular);
     valorViajeInput.addEventListener("input", calcular);
@@ -258,8 +267,6 @@
       palAncho.value = p.ancho;
     }
 
-    // Calcula capacidad máxima de pallets para un camión
-    // nivelesApilables = cuántos niveles máximo me autorizan (operación)
     function capacidadPalletsCamion(Lc, Ac, Hc, Lp, Ap, Hp, nivelesApilables) {
       const volPallet = Lp * Ap * Hp;
       const volCamion = Lc * Ac * Hc;
@@ -289,8 +296,6 @@
       };
     }
 
-    // Busca el camión más pequeño que pueda cargar los pallets deseados
-    // usando los mismos niveles apilables que definió el usuario
     function sugerirTransporte(deseados, Lp, Ap, Hp, nivelesApilables) {
       if (deseados <= 0) return null;
 
@@ -341,6 +346,15 @@
         return;
       }
 
+      /* 🔒 RESTRICCIÓN: alto pallet NO puede superar alto camión */
+      if (Hp > Hc) {
+        mensaje.textContent = `⚠ El alto del pallet (${Hp} m) NO puede ser mayor que el alto interno del camión (${Hc} m).`;
+        mensaje.className = "small status-bad";
+        salida.innerHTML = "";
+        sugerenciaDiv.textContent = "";
+        return;
+      }
+
       const datos = capacidadPalletsCamion(
         Lc,
         Ac,
@@ -364,7 +378,6 @@
 
       const valorPorM3 = volCamion > 0 ? valorViaje / volCamion : 0;
 
-      // mensaje principal + cantidad de camiones necesarios si me paso
       let mensajeTexto = "";
       if (deseados <= 0) {
         mensajeTexto = "No ingresaste cantidad de pallets, se muestra solo la capacidad máxima del camión.";
@@ -386,14 +399,12 @@
           ? "small status-ok"
           : "small status-bad";
 
-      // sugerencia de transporte (si me paso o si me falta)
       let sugerenciaTexto = "";
       if (deseados > 0) {
         const sugerido = sugerirTransporte(deseados, Lp, Ap, Hp, nivelesApilables);
         const idActual = truckSelect.value;
 
         if (deseados > maximo) {
-          // Estoy pasado: sugerir uno más grande
           if (sugerido) {
             sugerenciaTexto =
               `Sugerencia de transporte: el camión seleccionado no alcanza. ` +
@@ -405,7 +416,6 @@
               "No se encontró un tipo de transporte en la lista que pueda cargar esa cantidad de pallets con estas dimensiones.";
           }
         } else {
-          // Cabe, pero vemos si hay uno más pequeño que también sirva
           if (sugerido && sugerido.id !== idActual && sugerido.capacidadPallets < maximo) {
             sugerenciaTexto =
               `Sugerencia de optimización: con ${deseados} pallets podrías usar un camión más pequeño, ` +
@@ -419,7 +429,6 @@
       }
       sugerenciaDiv.textContent = sugerenciaTexto;
 
-      // === TABLA DE USO NUMÉRICO Y PORCENTUAL ===
       const usadosPallets = deseados > 0 ? Math.min(deseados, maximo) : 0;
       const usoPallets = maximo > 0 ? (usadosPallets / maximo) * 100 : 0;
 
