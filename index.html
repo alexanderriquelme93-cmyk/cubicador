@@ -4,33 +4,66 @@
   <meta charset="UTF-8" />
   <title>Calculadora de Cubicación</title>
   <style>
-   <style>
     body {
       font-family: Arial, sans-serif;
       max-width: 1100px;
-@@ -52,416 +52,422 @@
+      margin: 20px auto;
+      padding: 10px 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    label {
+      display: block;
+      margin-top: 6px;
+      font-size: 0.9rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 4px 6px;
+      margin-top: 2px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .resultado {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 6px;
       border: 1px solid #ccc;
       background: #fafafa;
     }
-
-    /* 🔵 ESTA ES LA SECCIÓN QUE DEBES MODIFICAR 🔵 */
     .small {
       font-size: 0.8rem;
-      font-size: 0.8rem;   /* <--- AUMENTA ESTE VALOR */
       color: #555;
     }
     .status-ok {
       color: #0a7a0a;
       font-weight: bold;
-      /* puedes agregar font-size aquí si quieres agrandar más */
     }
     .status-bad {
       color: #b00020;
       font-weight: bold;
-      /* puedes agregar font-size aquí si quieres agrandar más */
     }
-    /* 🔵 FIN DE LA SECCIÓN A MODIFICAR 🔵 */
-
     table.resumen {
       border-collapse: collapse;
       width: 100%;
@@ -96,6 +129,7 @@
           <option value="camionSimple">Camión Simple</option>
           <option value="camionRampla">Camión Rampla 40'</option>
           <option value="camionTermico">Camión Térmico</option>
+          <option value="camionPluma">Camión Pluma</option>
           <option value="camionHighCube">Contenedor High Cube 40'</option>
           <option value="contenedor20">Contenedor 20'</option>
           <option value="contenedor40">Contenedor 40'</option>
@@ -168,7 +202,8 @@
       camion34: { nombre: "Camión 3/4", largo: 4.5, ancho: 2.2, alto: 2.1, capacidad: 3000 },
       camionSimple: { nombre: "Camión Simple", largo: 7.0, ancho: 2.4, alto: 2.4, capacidad: 10000 },
       camionRampla: { nombre: "Camión Rampla 40'", largo: 12.5, ancho: 2.4, alto: 2.4, capacidad: 28000 },
-      camionTermico: { nombre: "Camión Térmico", largo: 8.0, ancho: 2.4, alto: 2.5, capacidad: 12000 },      
+      camionTermico: { nombre: "Camión Térmico", largo: 8.0, ancho: 2.4, alto: 2.5, capacidad: 12000 },
+      camionPluma: { nombre: "Camión Pluma", largo: 5.5, ancho: 2.3, alto: 2.2, capacidad: 5000 },
       camionHighCube: { nombre: "Contenedor High Cube 40'", largo: 12.03, ancho: 2.35, alto: 2.69, capacidad: 26000 },
       contenedor20: { nombre: "Contenedor 20'", largo: 5.90, ancho: 2.35, alto: 2.39, capacidad: 28000 },
       contenedor40: { nombre: "Contenedor 40'", largo: 12.03, ancho: 2.35, alto: 2.39, capacidad: 30000 }
